@@ -8,6 +8,10 @@ import '../providers/category_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/monkey_header.dart';
+import '../widgets/safe_to_spend_widget.dart';
+import '../widgets/budget_progress.dart';
+import '../widgets/monkey_advice.dart';
+import '../widgets/template_chips.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -40,8 +44,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       body: Column(
         children: [
-          // Панель фильтров
-          const MonkeyHeader(),
+          // 1. Карточка мартышки со streak
+          const MonkeyHeader(), 
+          
+          // 2. Главная цифра
+          const SafeToSpendWidget(),
+
+          // 3. Прогресс-бар бюджета
+          const BudgetProgress(),
+
+          // 4. Совет мартышки
+          const MonkeyAdvice(),
+
+          // 5. Шаблоны для быстрого ввода
+          const TemplateChips(),
+          const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
