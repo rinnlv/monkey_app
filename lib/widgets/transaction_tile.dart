@@ -30,7 +30,9 @@ class TransactionTile extends StatelessWidget {
     final isExpense = transaction.type == 'expense';
     final amountColor = isExpense ? Colors.red.shade700 : Colors.green.shade700;
     final amountPrefix = isExpense ? '-' : '+';
-    final formatter = NumberFormat.currency(locale: 'ru', symbol: '₽', decimalDigits: 0);
+    
+    // Оставляем 2 знака после запятой, чтобы копейки отображались
+    final formatter = NumberFormat.currency(locale: 'ru', symbol: '₽', decimalDigits: 2);
 
     final catColor = category?.color != null ? _hexToColor(category!.color!) : Colors.grey;
     final catIcon = category?.icon ?? 'other';
@@ -50,16 +52,27 @@ class TransactionTile extends StatelessWidget {
       title: Text(
         category?.name ?? 'Без категории',
         style: const TextStyle(fontWeight: FontWeight.w500),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis, // Защита для длинных названий категорий
       ),
       subtitle: transaction.description != null && transaction.description!.isNotEmpty
-          ? Text(transaction.description!, maxLines: 1, overflow: TextOverflow.ellipsis)
+          ? Text(
+              transaction.description!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            )
           : null,
-      trailing: Text(
-        '$amountPrefix${formatter.format(transaction.amount)}',
-        style: TextStyle(
-          color: amountColor,
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
+      trailing: SizedBox(
+        width: 110, // Ограничиваем ширину, чтобы длинная сумма не ломала экран
+        child: Text(
+          '$amountPrefix${formatter.format(transaction.amount)}',
+          textAlign: TextAlign.right,
+          style: TextStyle(
+            color: amountColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );

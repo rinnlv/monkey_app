@@ -1,52 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import '../db/database_helper.dart';
 import '../providers/transaction_provider.dart';
 
-class TemplateChips extends ConsumerStatefulWidget {
+// Добавляем провайдер для шаблонов
+final templatesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  // Следим за транзакциями, чтобы при добавлении новой траты обновлять и шаблоны
+  ref.watch(transactionProvider); 
+  return await DatabaseHelper().getAllTemplates();
+});
+
+class TemplateChips extends ConsumerWidget {
   const TemplateChips({super.key});
-  @override
-  ConsumerState<TemplateChips> createState() => _TemplateChipsState();
-}
-
-class _TemplateChipsState extends ConsumerState<TemplateChips> {
-  List<Map<String, dynamic>> _templates = [];
 
   @override
-  void initState() {
-    super.initState();
-    _loadTemplates();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final templatesAsync = ref.watch(templatesProvider);
 
-  Future<void> _loadTemplates() async {
-    final t = await DatabaseHelper().getAllTemplates();
-    if (mounted) setState(() => _templates = t);
-  }
+    return templatesAsync.when(
+      loading: () => const SizedBox(),
+      error: (e, st) => const SizedBox(),
+      data: (templates) {
+        if (templates.isEmpty) return const SizedBox.shrink();
 
-  @override
-  Widget build(BuildContext context) {
-    if (_templates.isEmpty) return const SizedBox.shrink();
-
-    return SizedBox(
-      height: 50,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _templates.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final t = _templates[index];
-          return ActionChip(
-            label: Text('${t['name']} (${t['amount']} ₽)'),
-            onPressed: () => _addTransactionFromTemplate(t),
-          );
-        },
-      ),
+        return SizedBox(
+          height: 50,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: templates.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final t = templates[index];
+              return ActionChip(
+                label: Text('${t['name']} (${t['amount']} ₽)'),
+                onPressed: () => _addTransactionFromTemplate(context, ref, t),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
-  void _addTransactionFromTemplate(Map<String, dynamic> template) {
+  void _addTransactionFromTemplate(BuildContext context, WidgetRef ref, Map<String, dynamic> template) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -65,6 +62,8 @@ class _TemplateChipsState extends ConsumerState<TemplateChips> {
                 'description': template['name'],
                 'created_at': DateTime.now().toIso8601String(),
               });
+              // Принудительно обновляем список шаблонов
+              ref.invalidate(templatesProvider); 
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Добавлено')));
               }

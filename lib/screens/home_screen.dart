@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+
+import '../db/database_helper.dart';
 import '../models/category.dart';
 import '../models/transaction.dart';
 import '../providers/category_provider.dart';
@@ -12,7 +14,6 @@ import '../widgets/safe_to_spend_widget.dart';
 import '../widgets/budget_progress.dart';
 import '../widgets/monkey_advice.dart';
 import '../widgets/template_chips.dart';
-import '../db/database_helper.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -56,13 +57,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           // 4. Совет мартышки
           const MonkeyAdvice(),
-          // НОВЫЙ БЛОК: ПРОГНОЗ
+
+          // 5. Прогноз на следующий месяц
           FutureBuilder<List<double>>(
             future: DatabaseHelper().getMonthlyExpenseSums(3),
             builder: (context, snapshot) {
               if (!snapshot.hasData || snapshot.data!.length < 2) {
                 return const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
                   child: Text('Недостаточно данных для прогноза', style: TextStyle(color: Colors.grey, fontSize: 12)),
                 );
               }
@@ -70,14 +72,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               final average = sums.reduce((a, b) => a + b) / sums.length;
               
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
                 child: Row(
                   children: [
                     const Icon(Icons.show_chart, size: 16, color: Colors.blueGrey),
                     const SizedBox(width: 8),
-                    Text(
-                      'Прогноз на след. месяц: ~${average.toStringAsFixed(0)} ₽',
-                      style: const TextStyle(fontSize: 14, color: Colors.blueGrey, fontWeight: FontWeight.w500),
+                    Expanded(
+                      child: Text(
+                        'Прогноз на след. месяц: ~${average.toStringAsFixed(0)} ₽',
+                        style: const TextStyle(fontSize: 14, color: Colors.blueGrey, fontWeight: FontWeight.w500),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
@@ -85,18 +90,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             },
           ),
 
-
-          // 5. Шаблоны для быстрого ввода
+          // 6. Шаблоны для быстрого ввода
           const TemplateChips(),
           const SizedBox(height: 8),
+
+          // 7. Панель фильтров
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: _filterType,
-                    decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 10), isDense: true),
+                    isExpanded: true, // Защита от переполнения
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10), 
+                      isDense: true, 
+                      border: OutlineInputBorder()
+                    ),
                     items: const [
                       DropdownMenuItem(value: 'all', child: Text('Все')),
                       DropdownMenuItem(value: 'expense', child: Text('Расходы')),
@@ -110,10 +121,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: categoriesAsync.when(
                     data: (cats) => DropdownButtonFormField<int?>(
                       value: _filterCategoryId,
-                      decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 10), isDense: true),
+                      isExpanded: true, // Защита от переполнения
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10), 
+                        isDense: true, 
+                        border: OutlineInputBorder()
+                      ),
                       items: [
-                        const DropdownMenuItem(value: null, child: Text('Все категории')),
-                        ...cats.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))),
+                        const DropdownMenuItem(
+                          value: null, 
+                          child: Text('Все категории', overflow: TextOverflow.ellipsis)
+                        ),
+                        ...cats.map((c) => DropdownMenuItem(
+                          value: c.id, 
+                          child: Text(c.name, overflow: TextOverflow.ellipsis)
+                        )),
                       ],
                       onChanged: (val) => setState(() => _filterCategoryId = val),
                     ),
@@ -124,8 +146,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 8),
 
-          // Список транзакций
+          // 8. Список транзакций
           Expanded(
             child: transactionsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -139,11 +162,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   return true;
                 }).toList();
 
-                  if (filtered.isEmpty) {
-                    return const Center(
-                     child: Text('Пока пусто. Добавь первую трату!', style: TextStyle(fontSize: 16, color: Colors.grey)),
-                    );
-                  }
+                if (filtered.isEmpty) {
+                  return const Center(
+                    child: Text('Пока пусто. Добавь первую трату!', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                  );
+                }
 
                 // Группировка по датам
                 final grouped = <String, List<Transaction>>{};
@@ -209,7 +232,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               category: cat,
                               onTap: () => context.push('/add?id=${t.id}'),
                               onLongPress: () async {
-                                // Действия по долгому нажатию (Повторить или Шаблон)
                                 showModalBottomSheet(
                                   context: context,
                                   builder: (ctx) => Wrap(
@@ -226,9 +248,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       ListTile(
                                         leading: const Icon(Icons.bookmark_add),
                                         title: const Text('Сохранить как шаблон'),
-                                        onTap: () {
+                                        onTap: () async {
                                           Navigator.pop(ctx);
-                                          // Здесь позже добавим логику сохранения шаблона
+                                          
+                                          final templateNameController = TextEditingController(text: t.description ?? 'Новый шаблон');
+                                          
+                                          final result = await showDialog<bool>(
+                                            context: context,
+                                            builder: (dialogCtx) => AlertDialog(
+                                              title: const Text('Новый шаблон'),
+                                              content: TextField(
+                                                controller: templateNameController,
+                                                decoration: const InputDecoration(labelText: 'Название шаблона'),
+                                              ),
+                                              actions: [
+                                                TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('Отмена')),
+                                                TextButton(
+                                                  onPressed: () async {
+                                                    if (templateNameController.text.trim().isEmpty) return;
+                                                    
+                                                    await DatabaseHelper().insertTemplate({
+                                                      'name': templateNameController.text.trim(),
+                                                      'amount': t.amount,
+                                                      'category_id': t.categoryId,
+                                                      'description': t.description,
+                                                    });
+                                                    
+                                                    ref.invalidate(templatesProvider);
+                                                    
+                                                    if (dialogCtx.mounted) Navigator.pop(dialogCtx, true);
+                                                  },
+                                                  child: const Text('Сохранить'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+
+                                          if (result == true && context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text('Шаблон сохранен!')),
+                                            );
+                                          }
                                         },
                                       ),
                                     ],

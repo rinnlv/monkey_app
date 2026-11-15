@@ -1,17 +1,23 @@
-# monkey_app
+# MONkEY Lite 🐒
 
-A new Flutter project.
+Android-приложение для учёта личных расходов с маскотом-мартышкой.
 
-## Getting Started
+## Основные функции:
+- Учёт доходов и расходов с фильтрацией по категориям и типам.
+- Автоматическая классификация на основе введенного описания (правила).
+- Установка месячного бюджета и расчёт «Безопасной суммы в день».
+- Статистика с круговой диаграммой.
+- Шаблоны для быстрого добавления частых трат.
+- Мотивация: стрик (серия дней), смена настроения мартышки и советы.
 
-This project is a starting point for a Flutter application.
+## Стек технологий:
+- Flutter / Dart
+- Riverpod (управление состоянием)
+- SQLite (sqflite) для хранения данных
+- fl_chart для графиков
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Сборка и установка:
+1. Установите Flutter SDK.
+2. Выполните `flutter pub get`.
+3. Для сборки APK: `flutter build apk --release`.
+4. Готовый файл: `build/app/outputs/flutter-apk/app-release.apk`.

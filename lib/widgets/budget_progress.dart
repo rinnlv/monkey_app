@@ -35,13 +35,18 @@ class BudgetProgress extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text('Бюджет месяца', style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text(
-                        '${NumberFormat.currency(locale: 'ru', symbol: '₽', decimalDigits: 0).format(spent)} из ${NumberFormat.currency(locale: 'ru', symbol: '₽', decimalDigits: 0).format(budget)}',
-                        style: TextStyle(color: barColor, fontWeight: FontWeight.bold),
+                      const SizedBox(width: 8), // Небольшой отступ
+                      Expanded( // <--- ДОБАВИТЬ ВОТ ЭТО
+                        child: Text(
+                          '${NumberFormat.currency(locale: 'ru', symbol: '₽', decimalDigits: 2).format(spent)} из ${NumberFormat.currency(locale: 'ru', symbol: '₽', decimalDigits: 2).format(budget)}',
+                          textAlign: TextAlign.right, // Прижимаем к правому краю
+                          style: TextStyle(color: barColor, fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis, // Если совсем не влезет, поставит "..."
+                        ),
                       ),
                     ],
                   ),

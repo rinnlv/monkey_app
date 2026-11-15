@@ -45,7 +45,7 @@ class SafeToSpendWidget extends ConsumerWidget {
               textColor = Colors.grey.shade800;
             }
 
-            final formatter = NumberFormat.currency(locale: 'ru', symbol: '₽', decimalDigits: 0);
+            final formatter = NumberFormat.currency(locale: 'ru', symbol: '₽', decimalDigits: 2);
 
             return Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -60,7 +60,9 @@ class SafeToSpendWidget extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text(
                     safeAmount < 0 ? 'Бюджет превышен' : formatter.format(safeAmount),
+                    textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: textColor),
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(subLabel, style: const TextStyle(fontSize: 12, color: Colors.grey)),
