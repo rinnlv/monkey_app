@@ -75,7 +75,14 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     setState(() => _isSaving = true);
 
     try {
-      final amount = double.parse(_amountController.text.replaceAll(',', '.'));
+      // Безопасный парсинг: заменяем запятую на точку
+      final rawAmount = _amountController.text.trim().replaceAll(',', '.');
+      final amount = double.parse(rawAmount);
+      
+      if (amount <= 0) {
+        throw Exception('Сумма должна быть больше нуля');
+      }
+
       final row = {
         'amount': amount,
         'date': _selectedDate.toIso8601String().substring(0, 10),
@@ -98,7 +105,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
+        // Показываем понятную ошибку пользователю
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ошибка: ${e.toString().replaceAll('Exception: ', '')}')));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);

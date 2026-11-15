@@ -130,6 +130,43 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   leading: SvgPicture.asset('assets/icons/${c.icon}.svg', width: 24),
                   title: Text(c.name),
                   subtitle: c.isDefault ? const Text('Предустановленная', style: TextStyle(fontSize: 12)) : null,
+                  // Добавляем кнопку удаления только для пользовательских категорий
+                  trailing: c.isDefault ? null : IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () async {
+                      // Узнаем, есть ли транзакции в этой категории
+                      final txs = await DatabaseHelper().getAllTransactions();
+                      final count = txs.where((t) => t['category_id'] == c.id).length;
+                      
+                      if (!context.mounted) return;
+                      
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Удалить категорию?'),
+                          content: Text(count > 0 
+                            ? 'В категории есть $count транзакций. Они будут перенесены в "Прочее".' 
+                            : 'Вы уверены, что хотите удалить эту категорию?'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена')),
+                            TextButton(
+                              onPressed: () async {
+                                if (count > 0) {
+                                  // Ищем ID категории "Прочее"
+                                  final prochee = (await DatabaseHelper().getAllCategories()).firstWhere((cat) => cat['name'] == 'Прочее');
+                                  await DatabaseHelper().transferTransactionsToCategory(c.id!, prochee['id']);
+                                }
+                                await DatabaseHelper().deleteCategory(c.id!);
+                                ref.invalidate(categoryProvider);
+                                if (ctx.mounted) Navigator.pop(ctx);
+                              }, 
+                              child: const Text('Удалить', style: TextStyle(color: Colors.red))
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 )),
                 TextButton.icon(
                   onPressed: _addCategory,

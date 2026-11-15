@@ -12,6 +12,7 @@ import '../widgets/safe_to_spend_widget.dart';
 import '../widgets/budget_progress.dart';
 import '../widgets/monkey_advice.dart';
 import '../widgets/template_chips.dart';
+import '../db/database_helper.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -55,6 +56,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           // 4. Совет мартышки
           const MonkeyAdvice(),
+          // НОВЫЙ БЛОК: ПРОГНОЗ
+          FutureBuilder<List<double>>(
+            future: DatabaseHelper().getMonthlyExpenseSums(3),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.length < 2) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Text('Недостаточно данных для прогноза', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                );
+              }
+              final sums = snapshot.data!;
+              final average = sums.reduce((a, b) => a + b) / sums.length;
+              
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.show_chart, size: 16, color: Colors.blueGrey),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Прогноз на след. месяц: ~${average.toStringAsFixed(0)} ₽',
+                      style: const TextStyle(fontSize: 14, color: Colors.blueGrey, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+
 
           // 5. Шаблоны для быстрого ввода
           const TemplateChips(),
