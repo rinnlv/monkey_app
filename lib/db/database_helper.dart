@@ -288,4 +288,18 @@ class DatabaseHelper {
     await _insertDefaultRules(db);
     await _insertDefaultSettings(db);
   }
+  
+  Future<void> checkAndResetStreak() async {
+    final now = DateTime.now();
+    final today = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+    final yesterdayDate = now.subtract(const Duration(days: 1));
+    final yesterday = "${yesterdayDate.year}-${yesterdayDate.month.toString().padLeft(2, '0')}-${yesterdayDate.day.toString().padLeft(2, '0')}";
+    
+    String lastDate = await getSetting('last_record_date') ?? '';
+    
+    // Если дата последней записи не пустая, и это не сегодня и не вчера — сбрасываем
+    if (lastDate.isNotEmpty && lastDate != today && lastDate != yesterday) {
+      await setSetting('streak_count', '0');
+    }
+  }
 }

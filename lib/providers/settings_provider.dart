@@ -3,6 +3,7 @@ import '../db/database_helper.dart';
 
 final settingsProvider = FutureProvider<Map<String, String>>((ref) async {
   final db = DatabaseHelper();
+  await db.checkAndResetStreak(); 
   return {
     'budget_month': await db.getSetting('budget_month') ?? '0',
     'streak_count': await db.getSetting('streak_count') ?? '0',
