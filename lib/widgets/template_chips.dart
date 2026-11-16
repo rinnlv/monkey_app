@@ -22,7 +22,7 @@ class TemplateChips extends ConsumerWidget {
         if (templates.isEmpty) return const SizedBox.shrink();
 
         return SizedBox(
-          height: 50,
+          height: 40, // Чуть ниже
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -30,16 +30,22 @@ class TemplateChips extends ConsumerWidget {
             separatorBuilder: (_, __) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
               final t = templates[index];
-              // Проверяем тип: если не 'income', значит расход
               final isExpense = t['type'] != 'income'; 
-              final sign = isExpense ? '-' : '+';
-              final color = isExpense ? Colors.red.shade700 : Colors.green.shade700;
               
+              // Цвета из макета
+              final borderColor = isExpense ? const Color(0xFF85422D) : const Color(0xFF688B4B);
+              final textColor = borderColor;
+              final sign = isExpense ? '-' : '+';
+
               return ActionChip(
-                // Добавляем знак и цвет в отображение чипа
+                backgroundColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(color: borderColor, width: 1.5),
+                ),
                 label: Text(
-                  '$sign${t['amount']} ₽ • ${t['name']}', 
-                  style: TextStyle(color: color, fontWeight: FontWeight.bold)
+                  '$sign${t['amount']} ${t['name']}', 
+                  style: TextStyle(color: textColor, fontSize: 12)
                 ),
                 onPressed: () => _addTransactionFromTemplate(context, ref, t),
               );
@@ -64,7 +70,7 @@ class TemplateChips extends ConsumerWidget {
               await ref.read(transactionActionsProvider).add({
                 'amount': template['amount'],
                 'date': DateTime.now().toIso8601String().substring(0, 10),
-                'type': template['type'] ?? 'expense', // Берем тип из шаблона
+                'type': template['type'] ?? 'expense',
                 'category_id': template['category_id'],
                 'description': template['name'],
                 'created_at': DateTime.now().toIso8601String(),

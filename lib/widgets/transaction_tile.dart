@@ -28,49 +28,51 @@ class TransactionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isExpense = transaction.type == 'expense';
-    final amountColor = isExpense ? Colors.red.shade700 : Colors.green.shade700;
+    // Цвета для сумм
+    final amountColor = isExpense ? const Color(0xFFC0392B) : const Color(0xFF688B4B); 
     final amountPrefix = isExpense ? '-' : '+';
     
-    // Оставляем 2 знака после запятой, чтобы копейки отображались
     final formatter = NumberFormat.currency(locale: 'ru', symbol: '₽', decimalDigits: 2);
 
     final catColor = category?.color != null ? _hexToColor(category!.color!) : Colors.grey;
     final catIcon = category?.icon ?? 'other';
 
     return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       onTap: onTap,
       onLongPress: onLongPress,
       leading: CircleAvatar(
         backgroundColor: catColor.withOpacity(0.2),
         child: SvgPicture.asset(
           'assets/icons/$catIcon.svg',
-          width: 24,
-          height: 24,
+          width: 20,
+          height: 20,
           colorFilter: ColorFilter.mode(catColor, BlendMode.srcIn),
         ),
       ),
       title: Text(
         category?.name ?? 'Без категории',
-        style: const TextStyle(fontWeight: FontWeight.w500),
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
         maxLines: 1,
-        overflow: TextOverflow.ellipsis, // Защита для длинных названий категорий
+        overflow: TextOverflow.ellipsis, 
       ),
       subtitle: transaction.description != null && transaction.description!.isNotEmpty
           ? Text(
               transaction.description!,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             )
           : null,
       trailing: SizedBox(
-        width: 110, // Ограничиваем ширину, чтобы длинная сумма не ломала экран
+        width: 110, 
         child: Text(
           '$amountPrefix${formatter.format(transaction.amount)}',
           textAlign: TextAlign.right,
           style: TextStyle(
             color: amountColor,
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: 14,
           ),
           overflow: TextOverflow.ellipsis,
         ),

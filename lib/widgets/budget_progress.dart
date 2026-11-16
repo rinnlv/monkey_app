@@ -16,7 +16,7 @@ class BudgetProgress extends ConsumerWidget {
       error: (e, st) => const SizedBox(),
       data: (settings) {
         final budget = double.tryParse(settings['budget_month'] ?? '0') ?? 0.0;
-        if (budget <= 0) return const SizedBox.shrink(); // Если бюджет не задан, ничего не показываем
+        if (budget <= 0) return const SizedBox.shrink();
 
         return FutureBuilder<double>(
           future: DatabaseHelper().getSpentThisMonth(),
@@ -26,37 +26,38 @@ class BudgetProgress extends ConsumerWidget {
             final spent = snapshot.data!;
             final percent = (spent / budget) * 100;
             
-            Color barColor = Colors.green;
+            Color barColor = const Color(0xFF688B4B); // Зеленый по умолчанию
             if (percent >= 75 && percent <= 100) barColor = Colors.orange;
-            if (percent > 100) barColor = Colors.red;
+            if (percent > 100) barColor = const Color(0xFF85422D); // Коричневый при перерасходе
+
+            final formatter = NumberFormat.currency(locale: 'ru', symbol: '₽', decimalDigits: 2);
 
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Бюджет месяца', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 8), // Небольшой отступ
-                      Expanded( // <--- ДОБАВИТЬ ВОТ ЭТО
-                        child: Text(
-                          '${NumberFormat.currency(locale: 'ru', symbol: '₽', decimalDigits: 2).format(spent)} из ${NumberFormat.currency(locale: 'ru', symbol: '₽', decimalDigits: 2).format(budget)}',
-                          textAlign: TextAlign.right, // Прижимаем к правому краю
-                          style: TextStyle(color: barColor, fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis, // Если совсем не влезет, поставит "..."
-                        ),
+                      const Text(
+                        'Бюджет месяца', 
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF85422D))
+                      ),
+                      Text(
+                        '${formatter.format(spent)} из ${formatter.format(budget)}',
+                        style: const TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
+                  // Тонкая полоска
                   LinearProgressIndicator(
                     value: spent / budget,
                     color: barColor,
-                    backgroundColor: Colors.grey.shade300,
-                    minHeight: 8,
-                    borderRadius: BorderRadius.circular(4),
+                    backgroundColor: Colors.white.withOpacity(0.5),
+                    minHeight: 6,
+                    borderRadius: BorderRadius.circular(3),
                   ),
                 ],
               ),
