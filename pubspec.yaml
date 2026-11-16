@@ -67,6 +67,14 @@ flutter:
     - assets/icons/
     - assets/monkey/
 
+  fonts:
+    - family: Geologica
+      fonts:
+        - asset: assets/fonts/Geologica_Auto-Medium.ttf
+    - family: Gluten
+      fonts:
+        - asset: assets/fonts/Gluten-Regular.ttf
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

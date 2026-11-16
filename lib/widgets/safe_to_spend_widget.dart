@@ -16,6 +16,7 @@ class SafeToSpendWidget extends ConsumerWidget {
       error: (e, st) => const SizedBox(),
       data: (settings) {
         final budget = double.tryParse(settings['budget_month'] ?? '0') ?? 0.0;
+        final streak = int.tryParse(settings['streak_count'] ?? '0') ?? 0;
 
         return FutureBuilder<double>(
           future: DatabaseHelper().getSpentThisMonth(),
@@ -28,44 +29,51 @@ class SafeToSpendWidget extends ConsumerWidget {
             final daysLeft = lastDayOfMonth - now.day + 1;
 
             double safeAmount;
-            String label;
-            String subLabel;
-            Color textColor = Colors.green.shade800;
-
             if (budget > 0) {
-              final remaining = budget - spent;
-              safeAmount = remaining / daysLeft;
-              label = 'Безопасно тратить в день';
-              subLabel = 'Осталось $daysLeft дней';
-              if (safeAmount < 0) textColor = Colors.red;
+              safeAmount = (budget - spent) / daysLeft;
             } else {
-              safeAmount = spent / now.day; // средний расход
-              label = 'Средний расход в день';
-              subLabel = 'Бюджет не установлен';
-              textColor = Colors.grey.shade800;
+              safeAmount = spent / now.day; 
             }
+
+            // Генерируем умный совет для верхней строчки
+            String adviceText = 'Совет: трать в день не более';
+            if (budget > 0 && spent > budget) adviceText = 'Бюджет превышен!';
+            else if (budget > 0 && spent > budget * 0.9) adviceText = 'Ты потратил 90% бюджета';
+            else if (streak >= 7) adviceText = 'Неделя без пропусков! Так держать';
+            else if (streak >= 3) adviceText = 'Отличная серия! Продолжай';
 
             final formatter = NumberFormat.currency(locale: 'ru', symbol: '₽', decimalDigits: 2);
 
             return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              padding: const EdgeInsets.all(16),
+              // Делаем карточку шире (уменьшаем отступы по бокам) и ниже
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
               decoration: BoxDecoration(
-                color: textColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
+                color: const Color(0xFF688B4B), 
+                borderRadius: BorderRadius.circular(16), // Чуть меньше скругление
               ),
               child: Column(
+                mainAxisSize: MainAxisSize.min, // Карточка обжимает контент
                 children: [
-                  Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-                  const SizedBox(height: 4),
                   Text(
-                    safeAmount < 0 ? 'Бюджет превышен' : formatter.format(safeAmount),
+                    adviceText,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: textColor),
-                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFFEFE4D4),
+                      fontSize: 13, // Чуть меньше размер
+                      height: 1.2,
+                    ),
                   ),
                   const SizedBox(height: 4),
-                  Text(subLabel, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text(
+                    safeAmount < 0 ? 'Перерасход' : formatter.format(safeAmount),
+                    style: const TextStyle(
+                      fontFamily: 'Gluten', 
+                      fontSize: 32, // Оптимальный размер цифры
+                      fontWeight: FontWeight.bold,
+                      color:Color(0xFFEFE4D4),
+                    ),
+                  ),
                 ],
               ),
             );
