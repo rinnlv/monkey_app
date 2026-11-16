@@ -4,6 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../db/database_helper.dart';
 import '../providers/category_provider.dart';
 import '../providers/settings_provider.dart';
+import 'package:go_router/go_router.dart';
+import '../providers/transaction_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -197,6 +199,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             error: (e, st) => Text('Ошибка: $e'),
           ),
           const Divider(),
+          ListTile(
+            title: const Text('Сбросить все данные', style: TextStyle(color: Colors.red)),
+            leading: const Icon(Icons.delete_forever, color: Colors.red),
+            onTap: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Очистить всё?'),
+                  content: const Text('Все ваши данные будут удалены, а категории вернутся к стандартным.'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
+                    TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Удалить', style: TextStyle(color: Colors.red))),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                await DatabaseHelper().resetDatabase();
+                // Обновляем все экраны, чтобы они увидели новые данные
+                ref.invalidate(settingsProvider);
+                ref.invalidate(transactionProvider);
+                ref.invalidate(categoryProvider);
+                if (context.mounted) context.go('/'); // Возвращаемся на главный экран
+              }
+            },
+          ),
+          const Divider(),
+          // ... дальше идет "О ПРИЛОЖЕНИИ"
           
           const ListTile(title: Text('О ПРИЛОЖЕНИИ', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold))),
           const ListTile(title: Text('MONkEY Lite v1.0'), subtitle: const Text('Трекер расходов с мартышкой 🐒')),

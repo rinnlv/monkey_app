@@ -273,4 +273,18 @@ class DatabaseHelper {
     
     return res.map((r) => (r['s'] as num?)?.toDouble() ?? 0.0).toList();
   }
+
+  Future<void> resetDatabase() async {
+    final db = await database;
+    await db.delete('transactions');
+    await db.delete('templates');
+    await db.delete('classification_rules');
+    await db.delete('categories'); // Удаляем всё
+    await db.delete('settings');
+    
+    // ВАЖНО: Сразу же возвращаем базовые данные, чтобы приложение не осталось пустым
+    await _insertDefaultCategories(db);
+    await _insertDefaultRules(db);
+    await _insertDefaultSettings(db);
+  }
 }
