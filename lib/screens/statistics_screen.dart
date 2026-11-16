@@ -13,10 +13,47 @@ class StatisticsScreen extends ConsumerStatefulWidget {
 }
 
 class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
+  // Переменная для хранения выбранного месяца
+  DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Статистика за месяц')),
+      appBar: AppBar(
+        title: const Text('Статистика'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(50),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                onPressed: () {
+                  setState(() {
+                    _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1, 1);
+                  });
+                },
+              ),
+              Text(
+                DateFormat('LLLL yyyy', 'ru').format(_selectedMonth).toUpperCase(),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                onPressed: () {
+                  final now = DateTime.now();
+                  // Запрещаем уходить в будущее
+                  if (_selectedMonth.year < now.year || (_selectedMonth.year == now.year && _selectedMonth.month < now.month)) {
+                    setState(() {
+                      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1);
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _loadData(),
         builder: (context, snapshot) {
@@ -107,22 +144,23 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
 
   Future<Map<String, dynamic>> _loadData() async {
     final db = DatabaseHelper();
-    // Загружаем словари и превращаем их в объекты Transaction
     final txsMaps = await db.getAllTransactions();
     final txs = txsMaps.map((m) => Transaction.fromMap(m)).toList();
     
     final catsMaps = await db.getAllCategories();
     final cats = catsMaps.map((c) => Category.fromMap(c)).toList();
 
-    final now = DateTime.now();
-    final currentMonthTxs = txs.where((t) => t.date.month == now.month && t.date.year == now.year).toList();
+    // ФИЛЬТРУЕМ ПО ВЫБРАННОМУ МЕСЯЦУ
+    final monthTxs = txs.where((t) => 
+      t.date.month == _selectedMonth.month && t.date.year == _selectedMonth.year
+    ).toList();
 
     double totalExpense = 0;
     double totalIncome = 0;
     int countExpense = 0;
     final Map<int, double> sums = {};
 
-    for (var t in currentMonthTxs) {
+    for (var t in monthTxs) {
       if (t.type == 'expense') {
         totalExpense += t.amount;
         countExpense++;
