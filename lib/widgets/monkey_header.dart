@@ -8,16 +8,15 @@ class MonkeyHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(settingsProvider);
-    
     const colorBrown = Color(0xFF85422D);
-    const colorBeige = Color(0xFFEFE4D4);
 
     return settingsAsync.when(
-      loading: () => const SizedBox(height: 200),
+      loading: () => const SizedBox(height: 180),
       error: (e, st) => const SizedBox(),
       data: (settings) {
         final streak = int.tryParse(settings['streak_count'] ?? '0') ?? 0;
         
+        // Логика выбора мартышки
         String imagePath = 'assets/monkey/monkey_sad.png';
         if (streak >= 3) {
           imagePath = 'assets/monkey/monkey_happy.png';
@@ -26,11 +25,11 @@ class MonkeyHeader extends ConsumerWidget {
         }
 
         return SizedBox(
-          height: 200, 
+          height: 190, // Высота под лиану и мартышку
           child: Stack(
             clipBehavior: Clip.none, 
             children: [
-              // 1. Логотип по центру (k = 32)
+              // 1. Логотип по центру
               Positioned(
                 top: 10,
                 left: 0,
@@ -40,16 +39,16 @@ class MonkeyHeader extends ConsumerWidget {
                     text: TextSpan(
                       style: TextStyle(
                         fontFamily: 'Gluten',
-                        fontSize: 36, // Базовый размер
+                        fontSize: 36, 
                         fontWeight: FontWeight.bold,
                         color: colorBrown,
-                        letterSpacing: 2.0,
+                        letterSpacing: 3.0,
                       ),
                       children: const [
                         TextSpan(text: 'MON'),
                         TextSpan(
                           text: 'k',
-                          style: TextStyle(fontSize: 32), // 👈 Уменьшили до 32
+                          style: TextStyle(fontSize: 32), 
                         ),
                         TextSpan(text: 'EY'),
                       ],
@@ -58,72 +57,27 @@ class MonkeyHeader extends ConsumerWidget {
                 ),
               ),
 
-              // 2. Плашка "Серия" (слева, увеличенная)
+              // 2. Лиана (растянута по ширине)
               Positioned(
-                left: 24, // Вернули к левому краю (чуть больше отступ)
-                top: 80,  // Опустили под логотип
-                child: Container(
-                  height: 64, // 👈 Увеличили высоту (было 60)
-                  decoration: BoxDecoration(
-                    border: Border.all(color: colorBrown, width: 4.0),
-                    borderRadius: BorderRadius.circular(32), // 64 / 2
-                  ),
-                  clipBehavior: Clip.antiAlias, 
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Левая часть (текст)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24), // Больше отступов
-                        child: const Text(
-                          'Серия',
-                          style: TextStyle(
-                            fontFamily: 'Geologica',
-                            color: colorBrown,
-                            fontSize: 28, // 👈 Увеличили текст (было 26)
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      // Правая часть (коричневая с цифрой)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        alignment: Alignment.center,
-                        decoration: const BoxDecoration(
-                          color: colorBrown,
-                          // Закругляем левый край (32 внешний радиус - 4 обводка = 28)
-                          borderRadius: BorderRadius.horizontal(
-                            left: Radius.circular(28),
-                          ),
-                        ),
-                        constraints: const BoxConstraints(minWidth: 70), 
-                        child: Text(
-                          '$streak',
-                          style: const TextStyle(
-                            fontFamily: 'Gluten',
-                            color: colorBeige, 
-                            fontSize: 36, // 👈 Увеличили цифру (было 34)
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                top: 50, // Под логотипом
+                left: -20, // Немного вылезает за края для естественности
+                right: -20,
+                child: Image.asset(
+                  'assets/icons/liana.png',
+                  fit: BoxFit.cover,
+                  height: 100,
                 ),
               ),
 
-              // 3. Большая мартышка
+              // 3. Мартышка (справа, висит на лиане)
               Positioned(
-                right: -30, 
-                top: -35,   
-                child: Transform.rotate(
-                  angle: 0.3, 
-                  child: Image.asset(
-                    imagePath,
-                    width: 230, 
-                    height: 230,
-                    fit: BoxFit.contain,
-                  ),
+                right: -5, 
+                top: -10,
+                child: Image.asset(
+                  imagePath,
+                  width: 150, 
+                  height: 150,
+                  fit: BoxFit.contain,
                 ),
               ),
             ],

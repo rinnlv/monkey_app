@@ -16,7 +16,6 @@ class SafeToSpendWidget extends ConsumerWidget {
       error: (e, st) => const SizedBox(),
       data: (settings) {
         final budget = double.tryParse(settings['budget_month'] ?? '0') ?? 0.0;
-        final streak = int.tryParse(settings['streak_count'] ?? '0') ?? 0;
 
         return FutureBuilder<double>(
           future: DatabaseHelper().getSpentThisMonth(),
@@ -35,46 +34,57 @@ class SafeToSpendWidget extends ConsumerWidget {
               safeAmount = spent / now.day; 
             }
 
-            // Генерируем умный совет для верхней строчки
-            String adviceText = 'Совет: трать в день не более';
-            if (budget > 0 && spent > budget) adviceText = 'Бюджет превышен!';
-            else if (budget > 0 && spent > budget * 0.9) adviceText = 'Ты потратил 90% бюджета';
-            else if (streak >= 7) adviceText = 'Неделя без пропусков! Так держать';
-            else if (streak >= 3) adviceText = 'Отличная серия! Продолжай';
-
             final formatter = NumberFormat.currency(locale: 'ru', symbol: '₽', decimalDigits: 2);
+            final amountString = safeAmount < 0 ? 'Перерасход' : formatter.format(safeAmount);
 
-            return Container(
-              // Делаем карточку шире (уменьшаем отступы по бокам) и ниже
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF688B4B), 
-                borderRadius: BorderRadius.circular(16), // Чуть меньше скругление
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min, // Карточка обжимает контент
-                children: [
-                  Text(
-                    adviceText,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFFEFE4D4),
-                      fontSize: 13, // Чуть меньше размер
-                      height: 1.2,
+            // 👇 Выравниваем по левому краю
+            return Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                margin: const EdgeInsets.only(left: 16, top: 4, bottom: 8),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                width: 220, // 👈 Фиксированная ширина, чтобы не растягивалась
+                decoration: BoxDecoration(
+                  color: const Color(0xFF688B4B), 
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF688B4B).withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    safeAmount < 0 ? 'Перерасход' : formatter.format(safeAmount),
-                    style: const TextStyle(
-                      fontFamily: 'Gluten', 
-                      fontSize: 32, // Оптимальный размер цифры
-                      fontWeight: FontWeight.bold,
-                      color:Color(0xFFEFE4D4),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min, 
+                  children: [
+                    const Text(
+                      'Совет: трать в день\nне более',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFFEFE4D4), 
+                        fontSize: 12, 
+                        height: 1.2,
+                        letterSpacing: 0.5,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 6),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 400),
+                      child: Text(
+                        amountString,
+                        key: ValueKey<String>(amountString),
+                        style: const TextStyle(
+                          fontFamily: 'Gluten', 
+                          fontSize: 30, 
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFEFE4D4), 
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },

@@ -8,36 +8,50 @@ class CustomBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF688B4B); // Ваш зеленый
+    const primaryColor = Color(0xFF688B4B);
 
-    return BottomAppBar(
-      color: primaryColor,
-      shape: const CircularNotchedRectangle(), 
-      notchMargin: 6.0,
-      height: 60, // 👈 Уменьшили высоту зеленого фона
-      padding: EdgeInsets.zero,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          IconButton(
-            // 👈 Увеличили размер иконок до 30
-            icon: Icon(Icons.home_rounded, size: 30, color: currentIndex == 0 ? Colors.white : Colors.white54),
-            onPressed: () => context.go('/'),
-          ),
-          IconButton(
-            icon: Icon(Icons.bar_chart_rounded, size: 30, color: currentIndex == 1 ? Colors.white : Colors.white54),
-            onPressed: () => context.go('/stats'),
-          ),
-          const SizedBox(width: 48), // Место под круглую кнопку "Плюс"
-          IconButton(
-            icon: Icon(Icons.person_rounded, size: 30, color: currentIndex == 2 ? Colors.white : Colors.white54),
-            onPressed: () => context.go('/profile'),
-          ),
-          IconButton(
-            icon: Icon(Icons.settings_rounded, size: 30, color: currentIndex == 3 ? Colors.white : Colors.white54),
-            onPressed: () => context.go('/settings'),
+    return Container(
+      decoration: BoxDecoration(
+        // 👇 НОВОЕ: Мягкая тень над меню
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
           ),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)), // Скругляем верхние углы
+        child: BottomAppBar(
+          color: primaryColor,
+          shape: const CircularNotchedRectangle(), 
+          notchMargin: 6.0,
+          height: 60, 
+          padding: EdgeInsets.zero,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              IconButton(
+                icon: Icon(Icons.home_rounded, size: 30, color: currentIndex == 0 ? Colors.white : Colors.white54),
+                onPressed: () => context.go('/'),
+              ),
+              IconButton(
+                icon: Icon(Icons.bar_chart_rounded, size: 30, color: currentIndex == 1 ? Colors.white : Colors.white54),
+                onPressed: () => context.go('/stats'),
+              ),
+              const SizedBox(width: 48), 
+              IconButton(
+                icon: Icon(Icons.person_rounded, size: 30, color: currentIndex == 2 ? Colors.white : Colors.white54),
+                onPressed: () => context.go('/profile'),
+              ),
+              IconButton(
+                icon: Icon(Icons.settings_rounded, size: 30, color: currentIndex == 3 ? Colors.white : Colors.white54),
+                onPressed: () => context.go('/settings'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

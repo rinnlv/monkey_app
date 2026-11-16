@@ -9,8 +9,8 @@ import '../models/transaction.dart';
 import '../providers/category_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/transaction_tile.dart';
-import '../widgets/monkey_header.dart';
-import '../widgets/safe_to_spend_widget.dart';
+import '../widgets/dashboard_header.dart'; 
+import '../widgets/streak_pill_widget.dart'; 
 import '../widgets/budget_progress.dart';
 import '../widgets/template_chips.dart';
 import '../widgets/custom_bottom_nav.dart';
@@ -27,7 +27,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _searchQuery = '';
   DateTimeRange? _dateRange;
   
-  // Состояние для отображения поиска
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
 
@@ -37,16 +36,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.dispose();
   }
 
-  // Оформление для выпадающих списков
   InputDecoration _dropdownDecoration() {
     return InputDecoration(
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       isDense: true,
       filled: true,
-      fillColor: Colors.transparent, // Прозрачный фон
+      fillColor: Colors.transparent,
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20), // Капсула
-        borderSide: const BorderSide(color: Colors.black87, width: 1.5), // Черный контур
+        borderRadius: BorderRadius.circular(20),
+        borderSide: const BorderSide(color: Colors.black87, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(20),
@@ -63,10 +61,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
+      // Кнопка "Плюс" БЕЗ обводки
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/add'),
         backgroundColor: const Color(0xFF688B4B), 
         shape: const CircleBorder(),
+        elevation: 4,
         child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -75,13 +75,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            if (!isKeyboardOpen) const MonkeyHeader(), 
-            if (!isKeyboardOpen) const SafeToSpendWidget(),
+            // 1. Шапка с логотипом, лианой, мартышкой и зеленой карточкой
+            if (!isKeyboardOpen) const DashboardHeader(), 
+            
+            // 2. Коричневая плашка стрика
+            if (!isKeyboardOpen) const StreakPillWidget(),
+            if (!isKeyboardOpen) const SizedBox(height: 12),
+
+            // 3. Бюджет
             if (!isKeyboardOpen) const BudgetProgress(),
 
+            // 4. Прогноз
             if (!isKeyboardOpen)
               FutureBuilder<List<double>>(
-                // ... (ваш старый код прогноза, я его не меняю)
                 future: DatabaseHelper().getMonthlyExpenseSums(3),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData || snapshot.data!.length < 2) {
@@ -94,7 +100,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   final average = sums.reduce((a, b) => a + b) / sums.length;
                   
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
                     child: Row(
                       children: [
                         const Icon(Icons.show_chart, size: 14, color: Colors.grey),
@@ -112,25 +118,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 },
               ),
 
+            // 5. Шаблоны
             const TemplateChips(),
             const SizedBox(height: 8),
 
-            // 👇 НОВАЯ ПАНЕЛЬ ПОИСКА И ФИЛЬТРОВ 👇
+            // 6. Поиск и Фильтры
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: _isSearching 
-                ? _buildSearchField() // Если поиск открыт - показываем поле ввода
-                : _buildFilterRow(categoriesAsync), // Если закрыт - показываем строку с фильтрами
+                ? _buildSearchField() 
+                : _buildFilterRow(categoriesAsync),
             ),
             const SizedBox(height: 8),
 
-            // 8. Список транзакций
+            // 7. Список транзакций
             Expanded(
               child: transactionsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, st) => Center(child: Text('Ошибка: $e')),
                 data: (transactions) {
-                  // ... (ваш старый код фильтрации, я его не меняю)
                   final filtered = transactions.where((t) {
                     if (_filterType != 'all' && t.type != _filterType) return false;
                     if (_filterCategoryId != null && t.categoryId != _filterCategoryId) return false;
@@ -158,7 +164,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   }
 
                   return ListView.builder(
-                    // ... (ваш старый код ListView и карточек, я его не меняю)
                     itemCount: grouped.length,
                     itemBuilder: (context, index) {
                       final dateKey = grouped.keys.elementAt(index);
@@ -215,7 +220,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 category: cat,
                                 onTap: () => context.push('/add?id=${t.id}'),
                                 onLongPress: () async {
-                                  // ... ваш старый код долгого нажатия ...
                                   showModalBottomSheet(
                                     context: context,
                                     builder: (ctx) => Wrap(
@@ -234,17 +238,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                           title: const Text('Сохранить как шаблон'),
                                           onTap: () async {
                                             Navigator.pop(ctx);
+                                            
                                             final templateNameController = TextEditingController(text: t.description ?? 'Новый шаблон');
+                                            
                                             final result = await showDialog<bool>(
                                               context: context,
                                               builder: (dialogCtx) => AlertDialog(
                                                 title: const Text('Новый шаблон'),
-                                                content: TextField(controller: templateNameController, decoration: const InputDecoration(labelText: 'Название шаблона')),
+                                                content: TextField(
+                                                  controller: templateNameController,
+                                                  decoration: const InputDecoration(labelText: 'Название шаблона'),
+                                                ),
                                                 actions: [
                                                   TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('Отмена')),
                                                   TextButton(
                                                     onPressed: () async {
                                                       if (templateNameController.text.trim().isEmpty) return;
+                                                      
                                                       await DatabaseHelper().insertTemplate({
                                                         'name': templateNameController.text.trim(),
                                                         'amount': t.amount,
@@ -252,7 +262,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                         'description': t.description,
                                                         'type': t.type,
                                                       });
+                                                      
                                                       ref.invalidate(templatesProvider);
+                                                      
                                                       if (dialogCtx.mounted) Navigator.pop(dialogCtx, true);
                                                     },
                                                     child: const Text('Сохранить'),
@@ -260,8 +272,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                 ],
                                               ),
                                             );
+
                                             if (result == true && context.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Шаблон сохранен!')));
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Шаблон сохранен!')),
+                                              );
                                             }
                                           },
                                         ),
@@ -285,19 +300,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // 👇 Виджет строки фильтров (Лупа + Списки + Календарь) 👇
   Widget _buildFilterRow(AsyncValue<List<Category>> categoriesAsync) {
     return Row(
       children: [
-        // Кнопка поиска (Лупа)
         IconButton(
           icon: const Icon(Icons.search, color: Colors.black87, size: 28),
           onPressed: () {
             setState(() => _isSearching = true);
           },
         ),
-        
-        // Выпадающий список типов
         Expanded(
           child: DropdownButtonFormField<String>(
             value: _filterType,
@@ -313,10 +324,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        
-        // Выпадающий список категорий
         Expanded(
-          flex: 2, // Чуть шире, так как названия длиннее
+          flex: 2,
           child: categoriesAsync.when(
             data: (cats) => DropdownButtonFormField<int?>(
               value: _filterCategoryId,
@@ -340,8 +349,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
         const SizedBox(width: 4),
-
-        // Кнопка календаря (или крестик сброса)
         _dateRange != null 
           ? IconButton(
               icon: const Icon(Icons.close, color: Colors.red, size: 24),
@@ -366,7 +373,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // 👇 Виджет поля поиска (открывается по клику на лупу) 👇
   Widget _buildSearchField() {
     return TextField(
       controller: _searchController,
@@ -388,7 +394,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         fillColor: Colors.white.withOpacity(0.5),
         contentPadding: const EdgeInsets.symmetric(vertical: 12),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20), // Капсула
+          borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide.none,
         ),
       ),
