@@ -131,6 +131,10 @@ class DatabaseHelper {
       {'key': 'budget_month', 'value': '0'},
       {'key': 'last_record_date', 'value': ''},
       {'key': 'streak_count', 'value': '0'},
+      {'key': 'user_name', 'value': 'Друг'},
+      {'key': 'user_avatar', 'value': 'avatar1'},
+      // Вставляем дату напрямую, чтобы не было ошибки
+      {'key': 'first_open_date', 'value': DateTime.now().toIso8601String().substring(0, 10)},
     ];
     for (var s in settings) {
       await db.insert('settings', s);
