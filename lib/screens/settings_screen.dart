@@ -33,10 +33,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена')),
           TextButton(
             onPressed: () async {
-              await db.setSetting('budget_month', _budgetController.text);
+              final val = _budgetController.text.replaceAll(',', '.');
+              final newBudget = double.tryParse(val) ?? 0.0;
+              
+              if (newBudget == 0) {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Удалить бюджет?'),
+                    content: const Text('Вы уверены, что хотите сбросить лимит расходов?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
+                      TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Сбросить')),
+                    ],
+                  ),
+                );
+                if (confirm != true) return; // Если нажали "Отмена", прерываем сохранение
+              }
+              
+              await db.setSetting('budget_month', val);
               ref.invalidate(settingsProvider);
               if (mounted) Navigator.pop(ctx);
-            }, 
+            },
             child: const Text('Сохранить')
           ),
         ],
