@@ -22,14 +22,16 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  String _searchQuery = '';
+  DateTimeRange? _dateRange;
   String _filterType = 'all';
   int? _filterCategoryId;
-  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
     final transactionsAsync = ref.watch(transactionProvider);
     final categoriesAsync = ref.watch(categoryProvider);
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -47,51 +49,64 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: Column(
         children: [
           // 1. Карточка мартышки со streak
-          const MonkeyHeader(), 
+          if (!isKeyboardOpen) const MonkeyHeader(), 
           
           // 2. Главная цифра
-          const SafeToSpendWidget(),
+          if (!isKeyboardOpen) const SafeToSpendWidget(),
 
           // 3. Прогресс-бар бюджета
-          const BudgetProgress(),
+          if (!isKeyboardOpen) const BudgetProgress(),
 
           // 4. Совет мартышки
-          const MonkeyAdvice(),
+          if (!isKeyboardOpen) const MonkeyAdvice(),
 
           // 5. Прогноз на следующий месяц
-          FutureBuilder<List<double>>(
-            future: DatabaseHelper().getMonthlyExpenseSums(3),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData || snapshot.data!.length < 2) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                  child: Text('Недостаточно данных для прогноза', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                );
-              }
-              final sums = snapshot.data!;
-              final average = sums.reduce((a, b) => a + b) / sums.length;
-              
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                child: Row(
-                  children: [
-                    const Icon(Icons.show_chart, size: 16, color: Colors.blueGrey),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Прогноз на след. месяц: ~${average.toStringAsFixed(0)} ₽',
-                        style: const TextStyle(fontSize: 14, color: Colors.blueGrey, fontWeight: FontWeight.w500),
-                        overflow: TextOverflow.ellipsis,
+          if (!isKeyboardOpen)
+            FutureBuilder<List<double>>(
+              future: DatabaseHelper().getMonthlyExpenseSums(3),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData || snapshot.data!.length < 2) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                    child: Text('Недостаточно данных для прогноза', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  );
+                }
+                final sums = snapshot.data!;
+                final average = sums.reduce((a, b) => a + b) / sums.length;
+                
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.show_chart, size: 16, color: Colors.blueGrey),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Прогноз на след. месяц: ~${average.toStringAsFixed(0)} ₽',
+                          style: const TextStyle(fontSize: 14, color: Colors.blueGrey, fontWeight: FontWeight.w500),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
+                    ],
+                  ),
+                );
+              },
+            ),
 
           // 6. Шаблоны для быстрого ввода
           const TemplateChips(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Поиск по описанию...',
+                prefixIcon: const Icon(Icons.search),
+                isDense: true,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onChanged: (val) => setState(() => _searchQuery = val),
+            ),
+          ),
           const SizedBox(height: 8),
 
           // 7. Панель фильтров
@@ -99,6 +114,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
               children: [
+                // 1-й фильтр: Тип (Все / Расходы / Доходы)
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: _filterType,
@@ -108,7 +124,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       isDense: true, 
                       border: OutlineInputBorder()
                     ),
-                    items: const [
+                    items: const [ // <--- ВОТ ОН, СПИСОК ITEMS
                       DropdownMenuItem(value: 'all', child: Text('Все')),
                       DropdownMenuItem(value: 'expense', child: Text('Расходы')),
                       DropdownMenuItem(value: 'income', child: Text('Доходы')),
@@ -117,6 +133,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
+                
+                // 2-й фильтр: Категория
                 Expanded(
                   child: categoriesAsync.when(
                     data: (cats) => DropdownButtonFormField<int?>(
@@ -127,7 +145,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         isDense: true, 
                         border: OutlineInputBorder()
                       ),
-                      items: [
+                      items: [ // <--- И ВОТ ЗДЕСЬ ТОЖЕ
                         const DropdownMenuItem(
                           value: null, 
                           child: Text('Все категории', overflow: TextOverflow.ellipsis)
@@ -143,6 +161,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     error: (e, st) => const SizedBox(),
                   ),
                 ),
+
+                // Кнопка календаря (ровно одна!)
+                IconButton(
+                  icon: Icon(Icons.date_range, color: _dateRange != null ? Colors.orange : null),
+                  tooltip: 'Фильтр по дате',
+                  onPressed: () async {
+                    final picked = await showDateRangePicker(
+                      context: context,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now(),
+                      initialDateRange: _dateRange,
+                    );
+                    if (picked != null) {
+                      setState(() => _dateRange = picked);
+                    } else {
+                      setState(() => _dateRange = null);
+                    }
+                  },
+                ),
+                
+                // Кнопка сброса даты (появляется только при выборе дат)
+                if (_dateRange != null)
+                  IconButton(
+                    icon: const Icon(Icons.clear, color: Colors.red),
+                    tooltip: 'Показать за всё время',
+                    onPressed: () {
+                      setState(() => _dateRange = null);
+                    },
+                  ),
               ],
             ),
           ),
@@ -155,11 +202,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               error: (e, st) => Center(child: Text('Ошибка: $e')),
               data: (transactions) {
                 final filtered = transactions.where((t) {
+                  // 1. Старое условие: Фильтр по типу (Расход/Доход)
                   if (_filterType != 'all' && t.type != _filterType) return false;
+                  
+                  // 2. Старое условие: Фильтр по категории
                   if (_filterCategoryId != null && t.categoryId != _filterCategoryId) return false;
+
+                  // 👇 НОВОЕ УСЛОВИЕ 1: Поиск по тексту 👇
                   if (_searchQuery.isNotEmpty && 
-                      (t.description == null || !t.description!.toLowerCase().contains(_searchQuery.toLowerCase()))) return false;
-                  return true;
+                      (t.description == null || !t.description!.toLowerCase().contains(_searchQuery.toLowerCase()))) {
+                    return false;
+                  }
+                  
+                  // 👇 НОВОЕ УСЛОВИЕ 2: Фильтр по диапазону дат 👇
+                  if (_dateRange != null) {
+                    final tDate = DateTime(t.date.year, t.date.month, t.date.day);
+                    final start = DateTime(_dateRange!.start.year, _dateRange!.start.month, _dateRange!.start.day);
+                    final end = DateTime(_dateRange!.end.year, _dateRange!.end.month, _dateRange!.end.day);
+                    if (tDate.isBefore(start) || tDate.isAfter(end)) return false;
+                  }
+                  // 👆 КОНЕЦ НОВЫХ УСЛОВИЙ 👆
+
+                  return true; // Если трата прошла все проверки — показываем её
                 }).toList();
 
                 if (filtered.isEmpty) {
