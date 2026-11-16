@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../db/database_helper.dart';
 import '../models/category.dart';
 import '../models/transaction.dart';
+import '../widgets/custom_bottom_nav.dart';
+import 'package:go_router/go_router.dart';
 
 class StatisticsScreen extends ConsumerStatefulWidget {
   const StatisticsScreen({super.key});
@@ -139,6 +141,14 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
           );
         },
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/add'),
+        backgroundColor: const Color(0xFF688B4B),
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: Colors.white, size: 32),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
     );
   }
 

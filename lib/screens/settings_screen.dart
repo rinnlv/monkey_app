@@ -6,6 +6,8 @@ import '../providers/category_provider.dart';
 import '../providers/settings_provider.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/transaction_provider.dart';
+import '../widgets/custom_bottom_nav.dart';
+import 'package:go_router/go_router.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -226,7 +228,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const Divider(),
           // 👆 КОНЕЦ СЕКЦИИ ШАБЛОНОВ 👆
-          
+
           ListTile(
             title: const Text('Сбросить все данные', style: TextStyle(color: Colors.red)),
             leading: const Icon(Icons.delete_forever, color: Colors.red),
@@ -259,6 +261,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const ListTile(title: Text('MONkEY Lite v1.0'), subtitle: const Text('Трекер расходов с мартышкой 🐒')),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/add'),
+        backgroundColor: const Color(0xFF688B4B),
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: Colors.white, size: 32),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: const CustomBottomNav(currentIndex: 3),
     );
   }
 }
