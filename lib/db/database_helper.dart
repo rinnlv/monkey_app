@@ -58,6 +58,7 @@ class DatabaseHelper {
         amount REAL NOT NULL,
         category_id INTEGER NOT NULL,
         description TEXT,
+        type TEXT NOT NULL DEFAULT 'expense', 
         FOREIGN KEY (category_id) REFERENCES categories(id)
       )
     ''');

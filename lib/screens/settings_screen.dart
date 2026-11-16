@@ -199,6 +199,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             error: (e, st) => Text('Ошибка: $e'),
           ),
           const Divider(),
+
+          // 👇 НОВАЯ СЕКЦИЯ ШАБЛОНОВ 👇
+          const ListTile(title: Text('ШАБЛОНЫ', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold))),
+          FutureBuilder<List<Map<String, dynamic>>>(
+            future: DatabaseHelper().getAllTemplates(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const SizedBox();
+              final templates = snapshot.data!;
+              if (templates.isEmpty) return const ListTile(title: Text('Нет шаблонов', style: TextStyle(color: Colors.grey)));
+              
+              return Column(
+                children: templates.map((t) => ListTile(
+                  title: Text(t['name']),
+                  subtitle: Text('${t['amount']} ₽ (${t['type'] == 'expense' ? 'Расход' : 'Доход'})'),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () async {
+                      await DatabaseHelper().deleteTemplate(t['id']);
+                      setState(() {}); // Обновляем список после удаления
+                    },
+                  ),
+                )).toList(),
+              );
+            },
+          ),
+          const Divider(),
+          // 👆 КОНЕЦ СЕКЦИИ ШАБЛОНОВ 👆
+          
           ListTile(
             title: const Text('Сбросить все данные', style: TextStyle(color: Colors.red)),
             leading: const Icon(Icons.delete_forever, color: Colors.red),

@@ -336,6 +336,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                       'amount': t.amount,
                                                       'category_id': t.categoryId,
                                                       'description': t.description,
+                                                      'type': t.type,
                                                     });
                                                     
                                                     ref.invalidate(templatesProvider);
